@@ -1,0 +1,60 @@
+{
+  "skills": [
+    {
+      "name": "read-rom",
+      "description": "Identifica o sistema de uma ROM e a salva em docs/orig/ (não descompila).",
+      "argument_hint": "[--rom=<caminho>] [--system=<nome>]",
+      "title": "Read ROM",
+      "phases": ["read"]
+    },
+    {
+      "name": "decompile-rom",
+      "description": "Descompila a ROM salva em docs/orig/ para docs/decompiled/ (engenharia reversa).",
+      "argument_hint": "[--system=<nome>]",
+      "title": "Decompile ROM",
+      "phases": ["decompile"]
+    },
+    {
+      "name": "build-rom",
+      "description": "Lê docs/decompiled/, escolhe a linguagem, gera o código-fonte e faz o build e testes em Windows e Linux.",
+      "argument_hint": "[--platform=windows|linux|all] [--lang=<c|asm|...>]",
+      "title": "Build ROM",
+      "phases": ["build"]
+    },
+    {
+      "name": "read-and-decompile-rom",
+      "description": "Read + decompile: identifica o sistema da ROM, salva em docs/orig/ e descompila.",
+      "argument_hint": "[--rom=<caminho>] [--system=<nome>]",
+      "title": "Read and Decompile ROM",
+      "phases": ["read", "decompile"]
+    },
+    {
+      "name": "read-and-build-rom",
+      "description": "Read + decompile + build: da ROM ao código-fonte compilado e testado em Windows e Linux.",
+      "argument_hint": "[--rom=<caminho>] [--system=<nome>] [--platform=windows|linux|all] [--lang=<c|asm|...>]",
+      "title": "Read, Decompile and Build ROM",
+      "phases": ["read", "decompile", "build"]
+    },
+    {
+      "name": "decompile-and-build-rom",
+      "description": "Decompile + build: descompila a ROM em docs/orig/ e gera/testa o build em Windows e Linux.",
+      "argument_hint": "[--system=<nome>] [--platform=windows|linux|all] [--lang=<c|asm|...>]",
+      "title": "Decompile and Build ROM",
+      "phases": ["decompile", "build"]
+    },
+    {
+      "name": "rebuild-rom",
+      "description": "Refaz o build limpo a partir do decompilado/src existentes e revalida contra a ROM original.",
+      "argument_hint": "[--platform=windows|linux|all]",
+      "title": "Rebuild ROM",
+      "phases": ["rebuild"]
+    },
+    {
+      "name": "fix-rom-and-build",
+      "description": "Recebe um problema, relê a ROM original e o decompilado, corrige e rebuilda com verificação.",
+      "argument_hint": "<descrição do problema> [--platform=windows|linux|all]",
+      "title": "Fix ROM and Build",
+      "phases": ["fix"]
+    }
+  ]
+}

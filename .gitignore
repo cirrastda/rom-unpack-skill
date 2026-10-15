@@ -1,0 +1,6 @@
+docs/orig/
+docs/decompiled/
+build/
+__pycache__/
+*.pyc
+.venv/
