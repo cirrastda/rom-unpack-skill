@@ -1,37 +1,35 @@
-## Fase BUILD — gerar o código-fonte de rebuild e compilar (Windows e Linux)
+## Fase BUILD — gerar o código-fonte e compilar o jogo NATIVO para a plataforma
 
-Pré-requisito: `docs/decompiled/SYSTEM.md` e os arquivos descompilados. Se não existirem, executar antes a fase DECOMPILE (e READ).
+**O resultado do build é um executável nativo do jogo** (Windows: `.exe`; Linux: binário ELF), **não uma ROM**. A plataforma escolhida em `--platform` define qual executável é gerado e testado (padrão `all` = Windows e Linux). Reconstruir a ROM original não é o objetivo desta fase.
 
-### 1. Escolher a linguagem / abordagem
+Pré-requisito: `docs/decompiled/` completo (SYSTEM.md, disassembly, `assets/` com `manifest.json`). Se faltar algo, executar antes a fase DECOMPILE (e READ). Esta fase é **autônoma**, como a DECOMPILE: você instala, compila, testa e corrige tudo sem pedir comandos manuais ao usuário; só pergunte em caso de bloqueio real (admin, credenciais).
 
-Decidir com base no que foi descompilado e registrar a justificativa em `docs/decompiled/SYSTEM.md` (seção "Decisão de build"). Ordem de preferência (usar o mais alto nível **viável**, sem sacrificar a fidelidade verificável):
+### 1. Escolher a linguagem / abordagem nativa
 
-1. **Linguagem de alto nível (C/C++/Rust/etc.)** quando houver decomp matching/boa cobertura de lógica reconhecível (comum em N64/PSX/GBA/NDS com compilador conhecido, ou quando uma reimplementação portável, ex.: C + SDL2, for viável). Se o compilador original for conhecido, usar o mesmo (ex.: `agbcc`, IDO, GCC antigo) para obter ROM idêntica.
-2. **Assembly com assembler cross-platform** (RGBDS, ca65/ld65, WLA-DX, vasm, armips, `arm-none-eabi-as`, `m68k-elf-as`) quando a decompilação em alto nível não for viável. É o caminho padrão para NES/SNES/GB/GBC/Genesis/SMS/PCE/Atari.
-3. **Binários + `.incbin`** para partes não decompiláveis (dados, áudio, código ainda não entendido), sempre com manifesto de offsets.
+Decidir com base no que foi descompilado e registrar a justificativa em `docs/decompiled/SYSTEM.md` (seção "Decisão de build"). Ordem de preferência (usar a de mais alto nível **viável**):
 
-Todas as ferramentas escolhidas **precisam existir para Windows e Linux** (ou ser compiláveis delas). Se uma não existir para um dos SOs, trocar por alternativa ou compilar a partir do código-fonte durante o build.
+1. **Port em linguagem de alto nível** (C/C++/Rust/Go/etc.): reescrever a lógica do jogo a partir do disassembly, com uma camada de abstração de hardware (vídeo, áudio, entrada, armazenamento) sobre bibliotecas multiplataforma (ex.: SDL2/SDL3, sokol, raylib), carregando os assets extraídos de `docs/decompiled/assets/` (PNG/WAV/JSON), não a ROM.
+2. **Recompilação estática** (ex.: N64Recomp, ferramentas de static recompilation 6502/Z80/68k/ARM/MIPS): converter o código descompilado em C/C++ compilado nativamente, com runtime que emula PPU/APU/IO via SDL; assets vêm de `assets/`.
+3. **Último recurso:** executável nativo que embute um núcleo de CPU/hardware e executa o código reconstruído a partir de `docs/decompiled/` (montado pelo build, sem depender do arquivo ROM original em `docs/orig/`). Só use se 1 e 2 se mostrarem inviáveis, e registre o motivo.
 
-Resultado esperado de "build": a **ROM reconstruída** (mesmo formato do original). "Rodar completo" significa executar a ROM reconstruída em emulador (preferir o headless/CLI) no Windows e no Linux, e/ou, no caso de port nativo, o executável gerado.
+Toda ferramenta/biblioteca escolhida **precisa existir para Windows e Linux**. O jogo deve rodar completo (todas as telas, fases, áudio e entrada) e não pode ler nada de `docs/orig/` em tempo de execução.
 
 ### 2. Gerar o projeto em `src/`
 
-- Converter o conteúdo de `docs/decompiled/` em fontes organizados (um arquivo por banco/módulo), `include/` com constantes, `assets/` com binários referenciados.
-- Criar o build reprodutível:
-  - `Makefile` (alvos `all`, `rom`, `verify`, `test`, `clean`) que funcione em Linux e em Windows (via MSYS2/Git Bash/`make` do Chocolatey);
-  - `build.ps1` equivalente para Windows sem `make`;
-  - um `tools/bootstrap.(sh|ps1)` que baixa/instala as versões fixas das ferramentas em `tools/` (sem exigir privilégios de admin quando possível);
-  - `.github/workflows/build.yml` com matriz `windows-latest` + `ubuntu-latest` que roda bootstrap, build, `verify` e teste de execução.
-- Respeitar `--platform`: se `windows` ou `linux`, gerar/testar só essa plataforma e registrar que a outra foi excluída por filtro.
+- Código-fonte organizado por módulo (vídeo, áudio, entrada, lógica de jogo, dados), assets em `assets/` (cópia/empacotamento dos extraídos, via `tools/assets_pack.*` quando precisar reconverter).
+- Build reprodutível e **multiplataforma**: `CMakeLists.txt` (ou Cargo/Go modules) com presets `windows` e `linux`; `Makefile` e `build.ps1` como atalhos; `tools/bootstrap.(sh|ps1)` que instala toolchain e dependências (SDL etc.) com versões fixas, sem exigir admin quando possível.
+- `.github/workflows/build.yml` com matriz `windows-latest` + `ubuntu-latest` (compila, roda os testes e publica o executável como artefato).
+- Respeitar `--platform`: se `windows`, gerar/testar só o `.exe`; se `linux`, só o binário Linux; a outra plataforma é registrada como "excluída por filtro".
+- Saída em `build/<plataforma>/` (ex.: `build/windows/jogo.exe`, `build/linux/jogo`) com os assets ao lado ou embutidos.
 
-### 3. Compilar e verificar
+### 3. Compilar, executar e verificar (para cada plataforma selecionada)
 
-1. Rodar o build **limpo** na plataforma atual.
-2. **Verificação de fidelidade:** comparar o SHA1/CRC32 da ROM gerada com o de `docs/orig/rom-info.json` (`cmp`/`Get-FileHash`). Meta: idêntica byte a byte. Se houver diferença, localizar o primeiro offset divergente (`cmp -l | head`), mapear para o símbolo/banco e corrigir. Se a identidade total for impossível (ex.: port em C), documentar o critério de equivalência usado (ex.: testes de saída de vídeo/áudio/estado por frames).
-3. **Teste de execução completo:** rodar a ROM em emulador headless/CLI (ex.: Mesen `--testrunner`, mGBA `-t`/scripting, BizHawk/Lua, Ares/higan, melonDS, PPSSPP, Dolphin) por tempo suficiente para passar por boot, menu e gameplay inicial, com script que automatize inputs e capture screenshot/hash de frames; comparar com a execução da ROM original nos mesmos inputs. "Completo" significa percorrer o jogo na medida do automatizável; o que não for coberto deve ser listado em `docs/build-report.md` com instruções de verificação manual.
-4. **Outra plataforma:** se estiver no Windows, testar Linux via WSL2/Docker; se estiver em Linux, testar Windows via cross-compile + Wine, VM ou CI. Se não for possível localmente, disparar/descrever o workflow de CI e marcar a plataforma como "não verificada localmente".
-5. Corrigir falhas e repetir até passar. Máximo de tentativas autônomas razoáveis: se travar, reportar o bloqueio e as hipóteses em vez de forçar.
+1. Build **limpo** na plataforma atual; corrigir erros até compilar sem falhas.
+2. **Execução do executável nativo**: iniciar o jogo (modo headless/`--test` com injeção de entrada e captura de frames/áudio, ou display virtual como `xvfb` no Linux), percorrer boot, menu e as fases/telas de forma automatizada e confirmar que roda até o fim sem crash.
+3. **Fidelidade em relação ao original:** executar a ROM original em emulador headless (ex.: Mesen, mGBA, BizHawk) com as mesmas entradas e comparar frames/estado (screenshots, hashes de VRAM/RAM em pontos-chave, trilha de áudio). Divergências são bugs a corrigir. Registrar o que não pôde ser comparado automaticamente.
+4. **Outra plataforma:** no Windows, compilar e testar a versão Linux via WSL2/Docker; no Linux, compilar Windows (mingw-w64 + Wine, ou CI). Se não for possível localmente, marcar "não verificada localmente" e deixar o workflow de CI pronto; nunca declarar como testada sem ter executado.
+5. Repetir até tudo passar; ao esgotar uma estratégia, tentar outra (não pare para sugerir passos manuais).
 
 ### 4. Relatório
 
-Gravar `docs/build-report.md` com: data, plataformas (Windows/Linux: verificado local / via CI / filtrado / não verificado), versões de ferramentas, comandos exatos para reproduzir, SHA1 original vs. gerado, resultado dos testes de execução e pendências.
+Gravar `docs/build-report.md`: data, plataformas (verificada local / via CI / filtrada / não verificada), abordagem escolhida e justificativa, versões de ferramentas, comandos exatos para reproduzir, caminhos dos executáveis, resultados dos testes de execução e de fidelidade, e pendências. Terminar listando os executáveis gerados em `build/`.

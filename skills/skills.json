@@ -16,7 +16,7 @@
     },
     {
       "name": "build-rom",
-      "description": "Lê docs/decompiled/, escolhe a linguagem, gera o código-fonte e faz o build e testes em Windows e Linux.",
+      "description": "Lê docs/decompiled/, gera o código-fonte e compila o jogo nativo (executável) para a plataforma escolhida, com testes.",
       "argument_hint": "[--platform=windows|linux|all] [--lang=<c|asm|...>]",
       "title": "Build ROM",
       "phases": ["build"]
@@ -30,21 +30,21 @@
     },
     {
       "name": "read-and-build-rom",
-      "description": "Read + decompile + build: da ROM ao código-fonte compilado e testado em Windows e Linux.",
+      "description": "Read + decompile + build: da ROM ao jogo nativo compilado e testado.",
       "argument_hint": "[--rom=<caminho>] [--system=<nome>] [--platform=windows|linux|all] [--lang=<c|asm|...>]",
       "title": "Read, Decompile and Build ROM",
       "phases": ["read", "decompile", "build"]
     },
     {
       "name": "decompile-and-build-rom",
-      "description": "Decompile + build: descompila a ROM em docs/orig/ e gera/testa o build em Windows e Linux.",
+      "description": "Decompile + build: descompila a ROM em docs/orig/ (com assets) e gera o jogo nativo.",
       "argument_hint": "[--system=<nome>] [--platform=windows|linux|all] [--lang=<c|asm|...>]",
       "title": "Decompile and Build ROM",
       "phases": ["decompile", "build"]
     },
     {
       "name": "rebuild-rom",
-      "description": "Refaz o build limpo a partir do decompilado/src existentes e revalida contra a ROM original.",
+      "description": "Refaz o build nativo limpo a partir do decompilado/src existentes e revalida contra a ROM original.",
       "argument_hint": "[--platform=windows|linux|all]",
       "title": "Rebuild ROM",
       "phases": ["rebuild"]

@@ -50,12 +50,12 @@ A instalação também copia `tools/rom_identify.py` para `~/.rom-unpack/` (iden
 | Comando | O que faz |
 |---|---|
 | `/read-rom` | Identifica o sistema (extensão, magic bytes, hash na Web; pergunta se não conseguir) e salva a ROM em `docs/orig/` com `rom-info.json`. |
-| `/decompile-rom` | Lê a ROM de `docs/orig/` e faz a engenharia reversa para `docs/decompiled/` (disassembly, símbolos, assets, cobertura, `SYSTEM.md`). |
-| `/build-rom` | Lê o decompilado, escolhe a melhor linguagem (alto nível quando viável; senão C/Assembly/binários), gera `src/`, builda e testa em Windows e Linux. |
+| `/decompile-rom` | Lê a ROM de `docs/orig/` e faz a engenharia reversa para `docs/decompiled/` de forma autônoma: disassembly 100% da ROM, **assets extraídos** (PNG, áudio, textos, tabelas + `manifest.json`), símbolos, cobertura e prova de ida e volta (SHA1). |
+| `/build-rom` | Lê o decompilado, escolhe a melhor linguagem (alto nível quando viável), gera `src/` e compila o **jogo nativo** (`.exe` no Windows, binário no Linux) conforme `--platform`, testando execução e fidelidade contra a ROM original. |
 | `/read-and-decompile-rom` | read + decompile |
 | `/read-and-build-rom` | read + decompile + build |
 | `/decompile-and-build-rom` | decompile + build |
-| `/rebuild-rom` | Build limpo a partir do que já existe, revalidando contra a ROM original. |
+| `/rebuild-rom` | Build nativo limpo a partir do que já existe, revalidando contra a ROM original. |
 | `/fix-rom-and-build` | Recebe o problema, relê `docs/orig/` e `docs/decompiled/`, corrige e rebuilda com verificação. |
 
 Flags (opcionais): `--rom=<caminho>`, `--system=<nome>`, `--platform=windows|linux|all`, `--lang=<c|asm|...>`.
@@ -77,7 +77,7 @@ docs/build-report.md resultado dos builds/testes por plataforma
 src/  build/  Makefile  build.ps1  .github/workflows/build.yml
 ```
 
-Execute as skills na raiz de um projeto vazio (ou do jogo). Um build só é declarado OK após verificação real (SHA1 da ROM gerada vs. original e execução em emulador); plataformas não testáveis localmente são marcadas como tal em `docs/build-report.md`.
+Execute as skills na raiz de um projeto vazio (ou do jogo). Um build só é declarado OK após verificação real (execução do executável e comparação com a ROM original em emulador); plataformas não testáveis localmente são marcadas como tal em `docs/build-report.md`.
 
 ## Como funciona / como editar
 

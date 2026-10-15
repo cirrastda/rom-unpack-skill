@@ -12,10 +12,10 @@ Flags aceitas (todas opcionais):
 
 ```
 docs/orig/            ROM original (nunca modificar) + rom-info.json (hashes, sistema, header)
-docs/decompiled/      saída bruta da engenharia reversa (disassembly, mapas, assets extraídos, SYSTEM.md, SYMBOLS.md)
+docs/decompiled/      saída da engenharia reversa (disassembly, assets/ extraídos + manifest.json, SYSTEM.md, SYMBOLS.md, coverage.md)
 docs/build-report.md  resultado dos testes de build/execução por plataforma
 src/                  código-fonte reconstruído (linguagem escolhida)
-build/                artefatos gerados (ignorar no git)
+build/                executáveis nativos por plataforma (build/windows, build/linux; ignorar no git)
 Makefile, build.ps1   build reprodutível (Linux/macOS via make, Windows via PowerShell ou make)
 .github/workflows/build.yml   matriz windows-latest + ubuntu-latest
 ```
